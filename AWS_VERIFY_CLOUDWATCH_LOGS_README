@@ -1,0 +1,255 @@
+
+
+[[ AWS JAVA SDK: VERIFY CLOUDWATCH LOGS ]]
+
+Prototype proof of concpet for verifiying logs; this exmample uses the AWS JAVA SDK to read tomcat logs if availble.
+
+
+
+[[ READ CLOUDWATCH LOGS EXAMPLE ]]
+
+Check for and read from tomcat "localhost_access_log" logs in cloudwatch every EC2 instance with pagination.
+
+EXAMPLE OUTPUT:
+================================================================================
+The type of the object is: software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup
+[[ LOG_NAME: /aws/prod/dropbox-ui-log-group ]] 
+i-00971ef59a80bc080-cloud-init-output.log
+i-00cdc05ea2fe02015-catalina..log
+i-00cdc05ea2fe02015-catalina.out
+i-00cdc05ea2fe02015-cloud-init-output.log
+i-00cdc05ea2fe02015-codedeploy-agent-deployments.log
+i-00cdc05ea2fe02015-localhost..log
+i-00cdc05ea2fe02015-localhost_access_log..txt
+READING: i-00cdc05ea2fe02015-localhost_access_log..txt
+Successfully got CloudWatch log events!
+i-00dca506f218d45a8-catalina.2020-08-13.log
+i-00dca506f218d45a8-catalina.out
+i-00dca506f218d45a8-cloud-init-output.log
+i-00dca506f218d45a8-codedeploy-agent-deployments.log
+i-00dca506f218d45a8-localhost.2020-08-13.log
+i-00dca506f218d45a8-localhost_access_log..txt
+READING: i-00dca506f218d45a8-localhost_access_log..txt
+10.214.17.60 - - [13/Aug/2020:18:28:00 -0400] "GET /dropbox_ui/healthcheck HTTP/1.1" 200 866
+10.214.92.92 - - [13/Aug/2020:18:28:00 -0400] "GET /dropbox_ui/healthcheck HTTP/1.1" 200 866
+10.214.117.191 - - [13/Aug/2020:18:28:00 -0400] "GET /dropbox_ui/keepAlive.json?keycode=B9N9N9G9I9I99-M99-U97-W-891-1-K-J-M929H9G9E9D9U9U9L-U9----J-89K-W-V-I9Q9A9G9H9&targetKeycode=&_dc=1597357679768&callback=Ext.data.JsonP.callback7 HTTP/1.1" 200 165
+10.214.105.88 - - [13/Aug/2020:18:28:06 -0400] "GET /dropbox_ui/healthcheck HTTP/1.1" 200 866
+10.214.117.191 - - [13/Aug/2020:18:28:06 -0400] "GET /dropbox_ui/healthcheck HTTP/1.1" 200 866
+Successfully got CloudWatch log events!
+i-00ee7eeb1da94a3d7-catalina..log
+================================================================================
+
+
+
+
+[[ (QUICK SETUP) AWS SDK ENV FOR JAVA on Fedora ]]
+
+## GET SOFTWARE
+## 
+# Install Java JDK
+sudo yum -y install java-1.8.0-openjdk\*
+sudo yum -y install maven git wget curl sshpass
+java -version 
+
+
+## GET AWS JAVA SDKv2
+## 
+mkdir -p /home/oem/SDK/AWS_SDK/
+cd  /home/oem/SDK/AWS_SDK/
+
+cat <<EOF> pom.xml
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>libs</groupId>
+  <artifactId>mylibs</artifactId>
+  <version>1</version>
+<dependencies>
+<dependency>
+  <groupId>software.amazon.awssdk</groupId>
+  <artifactId>aws-sdk-java</artifactId>
+  <version>2.11.12</version>
+</dependency>
+</dependencies>
+</project>
+EOF
+
+mkdir ./LIB
+
+mvn -version
+mvn -v
+mvn dependency:copy-dependencies -DoutputDirectory=./LIB -Dhttps.protocols=TLSv1.2
+find  ./LIB | sort -V 
+
+
+
+
+
+
+
+[[ TEST BIULD ENVIRONMENT: PULL DOWN EXAMPLE/BUILD/RUN ]]
+
+## SET CREDS
+## 
+
+vi ~/.aws/credentials 
+
+AWS_REGION = us-east-1
+aws_access_key_id = ASIAUF25ZQAX6Y4HARFX
+aws_secret_access_key = HLfvEuMSMW9s+28kwU2JedUwLBBXXYE5nf2aKT36
+aws_session_token = IQoJb3JpZ2luX2VjEJb//////////wEaCXVzLWVhc3QtMSJIMEYCIQDUxOEMkJRI0J9DzliG2ZBWTm5VdhwfzT14U6/SytsAGgIhAMcQu+Lu1xcuBygjzffO7PkxObiQNYb1mqQ00owgScbyKv8BCC4QARoMMjg3NDIyNjQ0MjcxIgz1wYT+kJfBnp5GWsUq3AF/0eJfFHaYST3NAsyBtVQoL3SuufR0wqW7GIPrsNXoWO2G4mjriVETUt/wC5dtEc5WgY6VLmMPXO5bFpxaBTQ8r8ykC7vt64cDegYL7bnzidxLTQ4SqQp0I92JH9eYcoiq+pJlq4vNWrzQv0UEUJ49MOSQ4SpjH48vIhgv3dXPmKZir8V7wtu+NKh2mZ5SnBjw2II2R83G9B3Lq/ZwQoVNdk7dFn1trEDYs1MfplXKv2VpN3tG8HinxpZwTgBtif9+TuGeAop7hCa52ZE4pq+Y0jJEgrs+qWGE0z8sMIT07PcFOugBcRmqh0ygfo+OJ71Hz7bsiFBKRiRvEtPeFIkDUnyFORX0gjKBR376PMr2mzE0TrgU5a+KrzrzR4tKGQ7OlHwSC7sn5eRiteYn8kg45b/VvEsOlfwybls0Jf1njZhhHcQVaeYSf95DUG7+oUkj5LdueR82uYDOLKmoZ40L0Mm7InsDcvawVNIgIB11TusDtOhCZoHmAs7zaK+I4KSOyDScjQ5ScRhiT2/momtPwKqDSQGpKGhCfraacrJn84S2KUHktoiNkW3Pqd9a5X8KCOnctPg1gRo+9jaqxBp+pKeO5mBLY+EuaH5nDw==
+
+
+## LIST EC2 INSTANCES IN (US_EAST_1)
+CODE=https://raw.githubusercontent.com/awsdocs/aws-doc-sdk-examples/master/javav2/example_code/ec2/src/main/java/com/example/ec2/DescribeInstances.java
+CLASS=$(basename ${CODE} | sed 's/\..*//')
+cd /home/oem/SDK/AWS_SDK/
+wget ${CODE}
+sed -i '/^package/d' ${CLASS}.java
+sed -i '/Region.US_...._./s/=.*/= Region.US_EAST_1;/' ${CLASS}.java
+CLASSPATH=$(echo LIB/*.jar | tr ' ' ':')
+javac -cp ".:${CLASSPATH}" ${CLASS}.java
+java -cp ".:${CLASSPATH}" ${CLASS}
+
+
+
+
+
+
+@MAIN
+[[ Cloudwatch Logs Via Pagenation ]]
+
+### SET AWS CREDENTIALS
+###
+###
+vi ~/.aws/credentials 
+
+[default]
+AWS_REGION = us-east-1
+aws_access_key_id = ASIAUF25ZQAX6Y4HARFX
+aws_secret_access_key = HLfvEuMSMW9s+28kwU2JedUwLBBXXYE5nf2aKT36
+aws_session_token = IQoJb3JpZ2luX2VjEJb//////////wEaCXVzLWVhc3QtMSJIMEYCIQDUxOEMkJRI0J9DzliG2ZBWTm5VdhwfzT14U6/SytsAGgIhAMcQu+Lu1xcuBygjzffO7PkxObiQNYb1mqQ00owgScbyKv8BCC4QARoMMjg3NDIyNjQ0MjcxIgz1wYT+kJfBnp5GWsUq3AF/0eJfFHaYST3NAsyBtVQoL3SuufR0wqW7GIPrsNXoWO2G4mjriVETUt/wC5dtEc5WgY6VLmMPXO5bFpxaBTQ8r8ykC7vt64cDegYL7bnzidxLTQ4SqQp0I92JH9eYcoiq+pJlq4vNWrzQv0UEUJ49MOSQ4SpjH48vIhgv3dXPmKZir8V7wtu+NKh2mZ5SnBjw2II2R83G9B3Lq/ZwQoVNdk7dFn1trEDYs1MfplXKv2VpN3tG8HinxpZwTgBtif9+TuGeAop7hCa52ZE4pq+Y0jJEgrs+qWGE0z8sMIT07PcFOugBcRmqh0ygfo+OJ71Hz7bsiFBKRiRvEtPeFIkDUnyFORX0gjKBR376PMr2mzE0TrgU5a+KrzrzR4tKGQ7OlHwSC7sn5eRiteYn8kg45b/VvEsOlfwybls0Jf1njZhhHcQVaeYSf95DUG7+oUkj5LdueR82uYDOLKmoZ40L0Mm7InsDcvawVNIgIB11TusDtOhCZoHmAs7zaK+I4KSOyDScjQ5ScRhiT2/momtPwKqDSQGpKGhCfraacrJn84S2KUHktoiNkW3Pqd9a5X8KCOnctPg1gRo+9jaqxBp+pKeO5mBLY+EuaH5nDw==
+
+
+### RUN BUILD
+###
+### 
+
+mkdir -p /home/oem/SDK/AWS_SDK/
+cd /home/oem/SDK/AWS_SDK/
+CLASSPATH=$(echo LIB/*.jar | tr ' ' ':')
+
+#NOTE: Add code "CLOUDWATCH READ LOGS CODE" when editor pops up; save; close and it will compile and run
+
+CLASS=ReadCwLogEvents
+gedit -w ${CLASS}.java && \
+javac -cp ".:${CLASSPATH}" ${CLASS}.java && \
+java -cp ".:${CLASSPATH}" ${CLASS} > /tmp/AWS_PROD_LOG_INFO
+
+
+tail -f /tmp/AWS_PROD_LOG_INFO
+
+
+
+
+
+[[ CLOUDWATCH READ LOGS CODE ]]
+
+### LIST ALL LOGS & READ STREAMS (w/Pagenation)
+
+//ReadCwLogEvents.java
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.cloudwatch.model.CloudWatchException;
+import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.cloudwatchlogs.model.GetLogEventsRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.*;
+import software.amazon.awssdk.services.cloudwatchlogs.model.*;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogStreamsRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsRequest;
+import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
+//
+import java.util.List;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.regex.Pattern;  
+
+public class ReadCwLogEvents {
+    public static void main(String[] args) {
+
+        // Create a CloudWatchLogClient
+        Region region = Region.US_EAST_1;
+        //Region region = Region.US_EAST_2;
+
+        //INIT_CLIENT
+        CloudWatchLogsClient cloudWatchLogsClient = CloudWatchLogsClient.create();
+        boolean done = false;
+
+        //NEED_PAGENATION
+        System.out.println("[[[ LIST LOGS ]]]");
+
+        //HASH_MAPS
+        Map<String,String> map = new HashMap<>();  
+        Map<String,String> smap = new HashMap<>();  
+
+        //TOKEN_STRING
+        String nextToken = null;
+
+        try {
+        //DO-WHILE-LOOP
+            do {
+                DescribeLogGroupsRequest request = DescribeLogGroupsRequest.builder().nextToken(nextToken).build(); //PAGENATION
+                DescribeLogGroupsResponse response = cloudWatchLogsClient.describeLogGroups(request);
+
+                //Class cls = response.getClass();
+                //System.out.println("The type of the object is: " + cls.getName());
+
+                //SPLIT RESPONCE
+                String str[] = response.toString().split(",");
+                System.out.println("size: "+response.logGroups().size());
+
+                //MAKE_LIST
+                List<String> logs = new ArrayList<String>();
+	        logs = Arrays.asList(str);
+               
+                //FOREACH
+                for(String log: logs){
+                     String lstrs[] = log.split("=");
+	             for(String lstr: lstrs){
+	                  //System.out.println(lstr);
+                          map.put(lstrs[0].trim(), lstrs[1].trim()); 
+                     }
+                     if (Pattern.matches("(?i:.*LogGroupName.*)", log)){
+                          System.out.println("::::::::::::::::::::::::::::::::" +map.get("LogGroup(LogGroupName"));
+                          //PRINT_LOG_STREAM_INFO
+                          try{
+                              DescribeLogStreamsRequest stream_request = DescribeLogStreamsRequest.builder().logGroupName(map.get("LogGroup(LogGroupName")).build();
+                              String streams[] = cloudWatchLogsClient.describeLogStreams(stream_request).toString().split(",");
+                              for (String stream : streams) {
+                                  String sstrs[] = stream.split("=");
+	                          for(String sstr: sstrs){
+                                      smap.put(sstrs[0].trim(), sstrs[1].trim()); 
+                                  }
+                                  if (Pattern.matches("(?i:.*LogStreamName.*)", stream)){
+                                      System.out.println(smap.get("LogStream(LogStreamName"));
+                                  }
+                              }
+                           }catch(Exception e){
+                               //DO_NOTHING
+                           }
+                           //END
+                     }
+	        }
+            nextToken = response.nextToken();
+            } while (nextToken != null);
+
+        } catch (CloudWatchException e) {
+            //e.getStackTrace();
+        }
+    }
+}
+
+
+
+
+
