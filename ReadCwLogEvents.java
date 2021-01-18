@@ -1,14 +1,14 @@
 //ReadCwLogEvents.java
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cloudwatch.model.CloudWatchException;
-import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.awssdk.services.cloudwatchlogs.model.GetLogEventsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.*;
+//import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.*;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogStreamsRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
-//
+//import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogStreamsRequest;
+//import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogStreamsResponse;
+//import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsRequest;
+//import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
+//import software.amazon.awssdk.services.cloudwatchlogs.model.GetLogEventsRequest;
 import java.util.List;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -25,14 +25,16 @@ public class ReadCwLogEvents {
 
         //INIT_CLIENT
         CloudWatchLogsClient cloudWatchLogsClient = CloudWatchLogsClient.create();
-        boolean done = false;
 
         //NEED_PAGENATION
         System.out.println("[[[ LIST LOGS ]]]");
 
+        //VAR
+        //boolean done = false;
+
         //HASH_MAPS
-        Map<String,String> map = new HashMap<>();  
-        Map<String,String> smap = new HashMap<>();  
+        //Map<String,String> map = new HashMap<>();  
+        //Map<String,String> smap = new HashMap<>();  
 
         //TOKEN_STRING
         String nextToken = null;
@@ -46,48 +48,64 @@ public class ReadCwLogEvents {
                 //Class cls = response.getClass();
                 //System.out.println("The type of the object is: " + cls.getName());
 
-                //SPLIT RESPONCE
-                String str[] = response.toString().split(",");
-                System.out.println("size: "+response.logGroups().size());
-
-                //MAKE_LIST
-                List<String> logs = new ArrayList<String>();
-	        logs = Arrays.asList(str);
-               
-                //FOREACH
-                for(String log: logs){
-                     String lstrs[] = log.split("=");
-	             for(String lstr: lstrs){
-	                  //System.out.println(lstr);
-                          map.put(lstrs[0].trim(), lstrs[1].trim()); 
-                     }
-                     if (Pattern.matches("(?i:.*LogGroupName.*)", log)){
-                          System.out.println("::::::::::::::::::::::::::::::::" +map.get("LogGroup(LogGroupName"));
-                          //PRINT_LOG_STREAM_INFO
-                          try{
-                              DescribeLogStreamsRequest stream_request = DescribeLogStreamsRequest.builder().logGroupName(map.get("LogGroup(LogGroupName")).build();
-                              String streams[] = cloudWatchLogsClient.describeLogStreams(stream_request).toString().split(",");
-                              for (String stream : streams) {
-                                  String sstrs[] = stream.split("=");
-	                          for(String sstr: sstrs){
-                                      smap.put(sstrs[0].trim(), sstrs[1].trim()); 
+                //USE_CLASS_TO_GET_INFO
+                 for ( LogGroup logg : response.logGroups()) {
+                     Class clslog = logg.getClass();
+                     System.out.println("The type of the object is: " + clslog.getName());
+                     System.out.println("[[ LOG_NAME: " + logg.logGroupName()+ " ]] ");
+                     try {
+                         DescribeLogStreamsRequest stream_request = DescribeLogStreamsRequest.builder().logGroupName(logg.logGroupName()).build();
+                         DescribeLogStreamsResponse stream_response = cloudWatchLogsClient.describeLogStreams(stream_request);
+                         if (stream_response.hasLogStreams()) {
+                             for ( LogStream stream : stream_response.logStreams()) {
+                                 System.out.println(stream.logStreamName());
+                                 if (Pattern.matches("(?i:.*localhost_access_log.*)", stream.logStreamName() )){
+                                     System.out.println("READING: "+ stream.logStreamName());
+                                     getCWLogEvebts(cloudWatchLogsClient, logg.logGroupName(), stream.logStreamName());
                                   }
-                                  if (Pattern.matches("(?i:.*LogStreamName.*)", stream)){
-                                      System.out.println(smap.get("LogStream(LogStreamName"));
-                                  }
-                              }
-                           }catch(Exception e){
+                             }
+                             System.out.println("..");
+                         } else {
+                             System.out.println("..NO_STREAMS..");
+                         }
+                         }catch(Exception e){
                                //DO_NOTHING
-                           }
-                           //END
-                     }
-	        }
+                         }
+
+                 }
+
             nextToken = response.nextToken();
             } while (nextToken != null);
 
         } catch (CloudWatchException e) {
             //e.getStackTrace();
         }
+    }
+
+    //DUMP_LOG_STREAM_FUNCTION
+    public static void getCWLogEvebts(CloudWatchLogsClient cloudWatchLogsClient, String logGroupName, String logStreamName) {
+        try {
+            GetLogEventsRequest getLogEventsRequest = GetLogEventsRequest.builder()
+                .logGroupName(logGroupName)
+                .logStreamName(logStreamName)
+                .startFromHead(false)
+                .build();
+            //DUMP_ENTIRE_LOG
+            int logLimit = cloudWatchLogsClient.getLogEvents(getLogEventsRequest).events().size();
+
+            //DUMP Limited to # Lines
+            if (logLimit > 5)
+                   logLimit = 5;
+
+            for (int c = 0; c < logLimit; c++) {
+                //List<>.get(#) https://www.geeksforgeeks.org/list-get-method-in-java-with-examples
+                System.out.println(cloudWatchLogsClient.getLogEvents(getLogEventsRequest).events().get(c).message());
+            }
+        } catch (CloudWatchException e) {
+            System.err.println(e.awsErrorDetails().errorMessage());
+            System.exit(1);
+        }
+        System.out.println("Successfully got CloudWatch log events!");
     }
 }
 
